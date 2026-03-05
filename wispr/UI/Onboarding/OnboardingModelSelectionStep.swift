@@ -78,13 +78,15 @@ struct OnboardingModelSelectionStep: View {
                     }
                 )
                 .frame(maxWidth: 400)
+            } else if isPreparingModel,
+                      let modelId = selectedModelId,
+                      let selectedModel = availableModels.first(where: { $0.id == modelId }) {
+                // Show preparing view (replaces model list, same visual style as download progress)
+                preparingModelView(for: selectedModel)
+                    .frame(maxWidth: 400)
             } else {
                 // Model list for selection
                 modelListView
-
-                if isPreparingModel {
-                    preparingModelIndicator
-                }
             }
         }
         .task {
@@ -105,16 +107,29 @@ struct OnboardingModelSelectionStep: View {
         }
     }
 
-    /// Spinner shown while an already-downloaded model is being loaded and warmed up.
-    private var preparingModelIndicator: some View {
-        HStack(spacing: 8) {
-            ProgressView()
-                .controlSize(.small)
-            Text("Preparing model…")
-                .font(.callout)
-                .foregroundStyle(theme.secondaryTextColor)
+    /// Preparing view shown when loading an already-downloaded model.
+    /// Matches the visual style of ModelDownloadProgressView for consistency.
+    private func preparingModelView(for model: WhisperModelInfo) -> some View {
+        VStack(spacing: 14) {
+            VStack(spacing: 12) {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Preparing \(model.displayName)…")
+                        .font(.headline)
+                        .foregroundStyle(theme.primaryTextColor)
+                }
+
+                Text("Loading model into memory. This may take a moment for larger models.")
+                    .font(.callout)
+                    .foregroundStyle(theme.secondaryTextColor)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 8)
         }
-        .padding(.top, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Preparing \(model.displayName). Loading model into memory.")
     }
 
     /// A single row showing model info, a status icon, and an inline action button.
@@ -137,6 +152,16 @@ struct OnboardingModelSelectionStep: View {
                         }
                     }
                     settingsStore.activeModelName = model.id
+                    
+                    // Update model statuses to show the newly activated model
+                    for index in availableModels.indices {
+                        if availableModels[index].id == model.id {
+                            availableModels[index].status = .active
+                        } else if availableModels[index].status == .active {
+                            availableModels[index].status = .downloaded
+                        }
+                    }
+                    
                     downloadComplete = true
                     isPreparingModel = false
                 }
