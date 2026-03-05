@@ -156,8 +156,31 @@ final class StateManager {
         guard appState == .idle else { return }
 
         // Check permissions before starting
+        // If microphone permission is not determined, request it first
+        if permissionManager.microphoneStatus == .notDetermined {
+            Log.stateManager.debug("beginRecording — microphone permission not determined, requesting...")
+            let granted = await permissionManager.requestMicrophoneAccess()
+            if !granted {
+                Log.stateManager.warning("beginRecording — microphone permission denied by user")
+                // User just denied in the dialog - show error but don't open Settings yet
+                // They just saw the dialog, so they know what happened
+                appState = .error("Microphone access denied")
+                errorMessage = "Microphone access denied"
+                
+                // Auto-dismiss after 3 seconds
+                errorDismissTask?.cancel()
+                errorDismissTask = Task { @MainActor [weak self] in
+                    try? await Task.sleep(for: .seconds(3))
+                    await self?.resetToIdle()
+                }
+                return
+            }
+        }
+        
+        // Now check if all permissions are granted
         guard permissionManager.allPermissionsGranted else {
             Log.stateManager.warning("beginRecording — permissions not granted, aborting")
+            // Permission was previously denied - open System Settings to help user fix it
             await handleError(.microphonePermissionDenied)
             return
         }
@@ -290,6 +313,8 @@ final class StateManager {
     /// Displays the error message and automatically returns to `.idle`
     /// after ~5 seconds.
     ///
+    /// For permission errors, also opens System Settings to help the user fix the issue.
+    ///
     /// **Validates**: Requirement 12.1
     func handleError(_ error: WisprError) async {
         Log.stateManager.error("handleError — \(error.localizedDescription)")
@@ -308,6 +333,18 @@ final class StateManager {
             notification: .announcementRequested,
             userInfo: [.announcement: "Error: \(message)"]
         )
+        
+        // For permission errors, open System Settings to help user fix the issue
+        // (We only reach here if permission was already denied, since .notDetermined
+        // is handled in beginRecording() by requesting permission first)
+        switch error {
+        case .microphonePermissionDenied:
+            permissionManager.openMicrophoneSettings()
+        case .accessibilityPermissionDenied:
+            permissionManager.openAccessibilitySettings()
+        default:
+            break
+        }
 
         // Cancel any existing error dismiss timer
         errorDismissTask?.cancel()
