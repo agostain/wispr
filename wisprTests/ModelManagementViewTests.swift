@@ -2,7 +2,7 @@
 //  ModelManagementViewTests.swift
 //  wisprTests
 //
-//  Unit tests for ModelManagementView logic: WhisperModelInfo data model,
+//  Unit tests for ModelManagementView logic: ModelInfo data model,
 //  model status display, available models list structure, and deletion
 //  fallback logic from WhisperService.
 //  Requirements: 7.8, 7.9, 17.1
@@ -12,17 +12,17 @@ import Testing
 import Foundation
 @testable import wispr
 
-// MARK: - WhisperModelInfo Data Model Tests
+// MARK: - ModelInfo Data Model Tests
 
-/// Tests WhisperModelInfo struct properties and conformances.
+/// Tests ModelInfo struct properties and conformances.
 /// Validates: Requirement 7.2 (model info display)
 @MainActor
-@Suite("ModelManagement WhisperModelInfo Data Model")
-struct WhisperModelInfoDataModelTests {
+@Suite("ModelManagement ModelInfo Data Model")
+struct ModelInfoDataModelTests {
 
-    @Test("WhisperModelInfo stores all properties correctly")
+    @Test("ModelInfo stores all properties correctly")
     func testModelInfoProperties() {
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",
@@ -37,9 +37,9 @@ struct WhisperModelInfoDataModelTests {
         #expect(model.status == .notDownloaded)
     }
 
-    @Test("WhisperModelInfo status is mutable")
+    @Test("ModelInfo status is mutable")
     func testModelInfoStatusMutable() {
-        var model = WhisperModelInfo(
+        var model = ModelInfo(
             id: "base",
             displayName: "Base",
             sizeDescription: "~140 MB",
@@ -57,23 +57,23 @@ struct WhisperModelInfoDataModelTests {
         #expect(model.status == .active)
     }
 
-    @Test("WhisperModelInfo Equatable compares all fields")
+    @Test("ModelInfo Equatable compares all fields")
     func testModelInfoEquatable() {
-        let model1 = WhisperModelInfo(
+        let model1 = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",
             qualityDescription: "Fastest, lower accuracy",
             status: .downloaded
         )
-        let model2 = WhisperModelInfo(
+        let model2 = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",
             qualityDescription: "Fastest, lower accuracy",
             status: .downloaded
         )
-        let model3 = WhisperModelInfo(
+        let model3 = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",
@@ -85,9 +85,9 @@ struct WhisperModelInfoDataModelTests {
         #expect(model1 != model3)
     }
 
-    @Test("WhisperModelInfo uses id as Identifiable key")
+    @Test("ModelInfo uses id as Identifiable key")
     func testModelInfoIdentifiable() {
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "small",
             displayName: "Small",
             sizeDescription: "~460 MB",
@@ -287,7 +287,7 @@ struct ModelDeletionFallbackLogicTests {
 struct ModelManagementAccessibilityTests {
 
     /// Mirrors the accessibilityDescription computed property from ModelRowView.
-    private func accessibilityDescription(for model: WhisperModelInfo) -> String {
+    private func accessibilityDescription(for model: ModelInfo) -> String {
         var parts = [model.displayName, model.sizeDescription, model.qualityDescription]
         switch model.status {
         case .notDownloaded:
@@ -304,7 +304,7 @@ struct ModelManagementAccessibilityTests {
 
     @Test("Accessibility label for not downloaded model")
     func testAccessibilityNotDownloaded() {
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",
@@ -318,7 +318,7 @@ struct ModelManagementAccessibilityTests {
 
     @Test("Accessibility label for downloading model includes percentage")
     func testAccessibilityDownloading() {
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "base",
             displayName: "Base",
             sizeDescription: "~140 MB",
@@ -332,7 +332,7 @@ struct ModelManagementAccessibilityTests {
 
     @Test("Accessibility label for downloaded model")
     func testAccessibilityDownloaded() {
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "small",
             displayName: "Small",
             sizeDescription: "~460 MB",
@@ -346,7 +346,7 @@ struct ModelManagementAccessibilityTests {
 
     @Test("Accessibility label for active model")
     func testAccessibilityActive() {
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "large-v3",
             displayName: "Large",
             sizeDescription: "~3 GB",
@@ -360,7 +360,7 @@ struct ModelManagementAccessibilityTests {
 
     @Test("Accessibility label for downloading at 0 percent")
     func testAccessibilityDownloadingZero() {
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",
@@ -374,7 +374,7 @@ struct ModelManagementAccessibilityTests {
 
     @Test("Accessibility label for downloading at 100 percent")
     func testAccessibilityDownloadingComplete() {
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",

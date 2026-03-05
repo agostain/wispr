@@ -83,7 +83,7 @@ struct WhisperServiceTests {
     @Test("Download model prevents concurrent downloads")
     func testDownloadModelPreventsConcurrentDownloads() async {
         let service = WhisperService()
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",
@@ -122,7 +122,7 @@ struct WhisperServiceTests {
     @MainActor
     func testDownloadModelReportsProgress() async {
         let service = WhisperService()
-        let model = WhisperModelInfo(
+        let model = ModelInfo(
             id: "tiny",
             displayName: "Tiny",
             sizeDescription: "~75 MB",

@@ -46,7 +46,7 @@ struct StatusPillView: View {
 /// Status is displayed as a prominent badge/pill for at-a-glance clarity.
 /// The active model uses a highlighted card with a green border.
 struct ModelRowView: View {
-    let model: WhisperModelInfo
+    let model: ModelInfo
     let theme: UIThemeEngine
     let isActivating: Bool
     let isHighlighted: Bool
@@ -305,7 +305,7 @@ struct ModelRowView: View {
 private struct ModelRowPreviewWrapper: View {
     @Namespace private var namespace
     let theme: UIThemeEngine
-    let models: [WhisperModelInfo]
+    let models: [ModelInfo]
 
     var body: some View {
         ScrollView {
@@ -335,15 +335,15 @@ private struct ModelRowPreviewWrapper: View {
 #Preview("Model Management") {
     let theme = PreviewMocks.makeTheme()
     let settingsStore = PreviewMocks.makeSettingsStore()
-    let models: [WhisperModelInfo] = [
-        WhisperModelInfo(id: "tiny", displayName: "Tiny", sizeDescription: "~75 MB",
-                         qualityDescription: "Fastest, lower accuracy", status: .active),
-        WhisperModelInfo(id: "base", displayName: "Base", sizeDescription: "~140 MB",
-                         qualityDescription: "Fast, moderate accuracy", status: .downloaded),
-        WhisperModelInfo(id: "small", displayName: "Small", sizeDescription: "~460 MB",
-                         qualityDescription: "Balanced speed and accuracy", status: .notDownloaded),
-        WhisperModelInfo(id: "large-v3", displayName: "Large v3", sizeDescription: "~3 GB",
-                         qualityDescription: "Slowest, highest accuracy", status: .notDownloaded),
+    let models: [ModelInfo] = [
+        ModelInfo(id: "tiny", displayName: "Tiny", sizeDescription: "~75 MB",
+                  qualityDescription: "Fastest, lower accuracy", status: .active),
+        ModelInfo(id: "base", displayName: "Base", sizeDescription: "~140 MB",
+                  qualityDescription: "Fast, moderate accuracy", status: .downloaded),
+        ModelInfo(id: "small", displayName: "Small", sizeDescription: "~460 MB",
+                  qualityDescription: "Balanced speed and accuracy", status: .notDownloaded),
+        ModelInfo(id: "large-v3", displayName: "Large v3", sizeDescription: "~3 GB",
+                  qualityDescription: "Slowest, highest accuracy", status: .notDownloaded),
     ]
     ModelRowPreviewWrapper(theme: theme, models: models)
         .environment(settingsStore)
@@ -353,15 +353,15 @@ private struct ModelRowPreviewWrapper: View {
 #Preview("Model Management (Dark Mode)") {
     let theme = PreviewMocks.makeTheme()
     let settingsStore = PreviewMocks.makeSettingsStore()
-    let models: [WhisperModelInfo] = [
-        WhisperModelInfo(id: "tiny", displayName: "Tiny", sizeDescription: "~75 MB",
-                         qualityDescription: "Fastest, lower accuracy", status: .active),
-        WhisperModelInfo(id: "base", displayName: "Base", sizeDescription: "~140 MB",
-                         qualityDescription: "Fast, moderate accuracy", status: .downloaded),
-        WhisperModelInfo(id: "small", displayName: "Small", sizeDescription: "~460 MB",
-                         qualityDescription: "Balanced speed and accuracy", status: .notDownloaded),
-        WhisperModelInfo(id: "large-v3", displayName: "Large v3", sizeDescription: "~3 GB",
-                         qualityDescription: "Slowest, highest accuracy", status: .notDownloaded),
+    let models: [ModelInfo] = [
+        ModelInfo(id: "tiny", displayName: "Tiny", sizeDescription: "~75 MB",
+                  qualityDescription: "Fastest, lower accuracy", status: .active),
+        ModelInfo(id: "base", displayName: "Base", sizeDescription: "~140 MB",
+                  qualityDescription: "Fast, moderate accuracy", status: .downloaded),
+        ModelInfo(id: "small", displayName: "Small", sizeDescription: "~460 MB",
+                  qualityDescription: "Balanced speed and accuracy", status: .notDownloaded),
+        ModelInfo(id: "large-v3", displayName: "Large v3", sizeDescription: "~3 GB",
+                  qualityDescription: "Slowest, highest accuracy", status: .notDownloaded),
     ]
     ModelRowPreviewWrapper(theme: theme, models: models)
         .environment(settingsStore)

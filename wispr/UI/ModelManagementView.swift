@@ -20,16 +20,16 @@ struct ModelManagementView: View {
     @Environment(UIThemeEngine.self) private var theme: UIThemeEngine
 
     /// The WhisperService actor used for model operations.
-    private let whisperService: WhisperService
+    private let whisperService: any TranscriptionEngine
 
     /// Local state: snapshot of models with their current statuses.
-    @State private var models: [WhisperModelInfo] = []
+    @State private var models: [ModelInfo] = []
 
     /// Model IDs currently showing the download progress view.
     @State private var activeDownloads: Set<String> = []
 
     /// Model pending deletion confirmation.
-    @State private var modelToDelete: WhisperModelInfo?
+    @State private var modelToDelete: ModelInfo?
 
     /// Whether the delete confirmation dialog is shown.
     @State private var showDeleteConfirmation = false
@@ -51,7 +51,7 @@ struct ModelManagementView: View {
     /// slides from one row to another instead of fading independently.
     @Namespace private var highlightNamespace
 
-    init(whisperService: WhisperService) {
+    init(whisperService: any TranscriptionEngine) {
         self.whisperService = whisperService
     }
 
@@ -103,7 +103,7 @@ struct ModelManagementView: View {
 
     /// Builds the view for a single model: either the inline download progress or the standard row.
     @ViewBuilder
-    private func modelSection(for model: WhisperModelInfo) -> some View {
+    private func modelSection(for model: ModelInfo) -> some View {
         if activeDownloads.contains(model.id) {
             // Self-contained download progress view
             ModelDownloadProgressView(
@@ -163,7 +163,7 @@ struct ModelManagementView: View {
     ///
     /// Requirement 7.6: Switch active model.
     /// Requirement 7.7: Allow changing active model when not recording.
-    private func setActiveModel(_ model: WhisperModelInfo) async {
+    private func setActiveModel(_ model: ModelInfo) async {
         // Animate the green highlight to the new model before starting activation.
         if !theme.reduceMotion {
             withAnimation(.easeInOut(duration: 0.35)) {
@@ -193,7 +193,7 @@ struct ModelManagementView: View {
     }
 
     /// Shows the delete confirmation dialog.
-    private func requestDelete(_ model: WhisperModelInfo) {
+    private func requestDelete(_ model: ModelInfo) {
         modelToDelete = model
         showDeleteConfirmation = true
     }
@@ -203,7 +203,7 @@ struct ModelManagementView: View {
     /// Requirement 7.8: Remove model files from disk.
     /// Requirement 7.9: Switch to next smallest model before deleting active model.
     /// Requirement 7.10: Prompt to download if deleting the only model.
-    private func performDelete(_ model: WhisperModelInfo) async {
+    private func performDelete(_ model: ModelInfo) async {
         do {
             try await whisperService.deleteModel(model.id)
 

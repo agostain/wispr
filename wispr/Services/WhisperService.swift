@@ -73,38 +73,38 @@ actor WhisperService {
     ///
     /// Requirement 7.1: Return hardcoded list of standard Whisper models.
     ///
-    /// - Returns: Array of WhisperModelInfo with model details
-    func availableModels() -> [WhisperModelInfo] {
+    /// - Returns: Array of ModelInfo with model details
+    func availableModels() -> [ModelInfo] {
         return [
-            WhisperModelInfo(
+            ModelInfo(
                 id: "tiny",
                 displayName: "Tiny",
                 sizeDescription: "~75 MB",
                 qualityDescription: "Fastest, lower accuracy",
                 status: .notDownloaded
             ),
-            WhisperModelInfo(
+            ModelInfo(
                 id: "base",
                 displayName: "Base",
                 sizeDescription: "~140 MB",
                 qualityDescription: "Fast, moderate accuracy",
                 status: .notDownloaded
             ),
-            WhisperModelInfo(
+            ModelInfo(
                 id: "small",
                 displayName: "Small",
                 sizeDescription: "~460 MB",
                 qualityDescription: "Balanced speed and accuracy",
                 status: .notDownloaded
             ),
-            WhisperModelInfo(
+            ModelInfo(
                 id: "medium",
                 displayName: "Medium",
                 sizeDescription: "~1.5 GB",
                 qualityDescription: "Slower, high accuracy",
                 status: .notDownloaded
             ),
-            WhisperModelInfo(
+            ModelInfo(
                 id: "large-v3",
                 displayName: "Large v3",
                 sizeDescription: "~3 GB",
@@ -124,7 +124,7 @@ actor WhisperService {
     ///
     /// - Parameter model: The model to download
     /// - Returns: An AsyncThrowingStream of DownloadProgress updates
-    func downloadModel(_ model: WhisperModelInfo) -> AsyncThrowingStream<DownloadProgress, Error> {
+    func downloadModel(_ model: ModelInfo) -> AsyncThrowingStream<DownloadProgress, Error> {
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: DownloadProgress.self)
         
         // Requirement 7.4: Handle concurrent download tasks
@@ -249,7 +249,7 @@ actor WhisperService {
         if modelName == activeModelName {
             let availableModels = self.availableModels()
             
-            var downloadedModels: [WhisperModelInfo] = []
+            var downloadedModels: [ModelInfo] = []
             for model in availableModels where model.id != modelName {
                 let status = modelStatus(model.id)
                 // Use pattern matching to avoid Swift 6 concurrency warning
@@ -609,5 +609,43 @@ actor WhisperService {
     /// Requirement 7.7: Query which model is currently active.
     func activeModel() -> String? {
         return activeModelName
+    }
+}
+
+// MARK: - TranscriptionEngine Conformance
+
+extension WhisperService: TranscriptionEngine {
+
+    /// Streaming transcription stub — collects all audio chunks, then
+    /// delegates to the batch `transcribe(_:language:)` method.
+    ///
+    /// WhisperKit does not support true streaming transcription, so this
+    /// implementation buffers the entire audio stream before processing.
+    /// A future engine (e.g. Parakeet via FluidAudio) could yield partial
+    /// results as audio arrives.
+    func transcribeStream(
+        _ audioStream: AsyncStream<[Float]>,
+        language: TranscriptionLanguage
+    ) -> AsyncThrowingStream<TranscriptionResult, Error> {
+        let (stream, continuation) = AsyncThrowingStream.makeStream(of: TranscriptionResult.self)
+
+        Task {
+            do {
+                // Accumulate all audio chunks into a single buffer
+                var allSamples: [Float] = []
+                for await chunk in audioStream {
+                    allSamples.append(contentsOf: chunk)
+                }
+
+                // Delegate to the batch transcription method
+                let result = try await self.transcribe(allSamples, language: language)
+                continuation.yield(result)
+                continuation.finish()
+            } catch {
+                continuation.finish(throwing: error)
+            }
+        }
+
+        return stream
     }
 }

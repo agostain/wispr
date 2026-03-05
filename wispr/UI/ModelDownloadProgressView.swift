@@ -16,10 +16,10 @@ struct ModelDownloadProgressView: View {
     @Environment(UIThemeEngine.self) private var theme: UIThemeEngine
 
     /// The WhisperService actor used for downloading.
-    private let whisperService: WhisperService
+    private let whisperService: any TranscriptionEngine
 
     /// The model to download.
-    private let model: WhisperModelInfo
+    private let model: ModelInfo
 
     /// Whether the download should start automatically when the view appears.
     private let autoStart: Bool
@@ -45,8 +45,8 @@ struct ModelDownloadProgressView: View {
     // MARK: - Init
 
     init(
-        whisperService: WhisperService,
-        model: WhisperModelInfo,
+        whisperService: any TranscriptionEngine,
+        model: ModelInfo,
         autoStart: Bool = false,
         onComplete: ((String) -> Void)? = nil,
         onCancel: (() -> Void)? = nil
@@ -343,8 +343,8 @@ private struct GradientProgressBar: View {
 extension ModelDownloadProgressView {
     /// Preview-only initializer that accepts explicit state overrides for canvas previews.
     init(
-        whisperService: WhisperService,
-        model: WhisperModelInfo,
+        whisperService: any TranscriptionEngine,
+        model: ModelInfo,
         previewProgress: Double,
         previewDownloadedBytes: Int64 = 0,
         previewTotalBytes: Int64 = 0,

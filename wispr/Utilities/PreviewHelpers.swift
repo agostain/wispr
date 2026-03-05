@@ -53,7 +53,7 @@ enum PreviewMocks {
 
     /// These service inits are lightweight — no system resource allocation.
     static func makeAudioEngine() -> AudioEngine { AudioEngine() }
-    static func makeWhisperService() -> WhisperService { WhisperService() }
+    static func makeWhisperService() -> any TranscriptionEngine { WhisperService() }
     static func makeHotkeyMonitor() -> HotkeyMonitor { HotkeyMonitor() }
     static func makeTextInsertionService() -> TextInsertionService { TextInsertionService() }
     static func makePermissionManager() -> PermissionManager { PermissionManager() }
@@ -78,17 +78,17 @@ enum PreviewMocks {
 
     // MARK: - Sample Model Data
 
-    static let sampleModels: [WhisperModelInfo] = [
-        WhisperModelInfo(id: "tiny", displayName: "Tiny", sizeDescription: "~75 MB",
-                         qualityDescription: "Fastest, lower accuracy", status: .active),
-        WhisperModelInfo(id: "base", displayName: "Base", sizeDescription: "~140 MB",
-                         qualityDescription: "Fast, moderate accuracy", status: .downloaded),
-        WhisperModelInfo(id: "small", displayName: "Small", sizeDescription: "~460 MB",
-                         qualityDescription: "Balanced speed and accuracy", status: .notDownloaded),
-        WhisperModelInfo(id: "medium", displayName: "Medium", sizeDescription: "~1.5 GB",
-                         qualityDescription: "Slower, high accuracy", status: .downloading(progress: 0.45)),
-        WhisperModelInfo(id: "large-v3", displayName: "Large v3", sizeDescription: "~3 GB",
-                         qualityDescription: "Slowest, highest accuracy", status: .notDownloaded),
+    static let sampleModels: [ModelInfo] = [
+        ModelInfo(id: "tiny", displayName: "Tiny", sizeDescription: "~75 MB",
+                  qualityDescription: "Fastest, lower accuracy", status: .active),
+        ModelInfo(id: "base", displayName: "Base", sizeDescription: "~140 MB",
+                  qualityDescription: "Fast, moderate accuracy", status: .downloaded),
+        ModelInfo(id: "small", displayName: "Small", sizeDescription: "~460 MB",
+                  qualityDescription: "Balanced speed and accuracy", status: .notDownloaded),
+        ModelInfo(id: "medium", displayName: "Medium", sizeDescription: "~1.5 GB",
+                  qualityDescription: "Slower, high accuracy", status: .downloading(progress: 0.45)),
+        ModelInfo(id: "large-v3", displayName: "Large v3", sizeDescription: "~3 GB",
+                  qualityDescription: "Slowest, highest accuracy", status: .notDownloaded),
     ]
 }
 

@@ -14,12 +14,12 @@ struct OnboardingModelSelectionStep: View {
     @Environment(SettingsStore.self) private var settingsStore: SettingsStore
     @Environment(UIThemeEngine.self) private var theme: UIThemeEngine
 
-    /// The WhisperService actor used for model operations.
-    let whisperService: WhisperService
+    /// The transcription engine used for model operations.
+    let whisperService: any TranscriptionEngine
 
     // MARK: - Bindings to parent state
 
-    @Binding var availableModels: [WhisperModelInfo]
+    @Binding var availableModels: [ModelInfo]
     @Binding var selectedModelId: String?
     @Binding var downloadComplete: Bool
 
@@ -122,7 +122,7 @@ struct OnboardingModelSelectionStep: View {
     // MARK: - Actions
 
     /// Activates an already-downloaded model.
-    private func activateModel(_ model: WhisperModelInfo) async {
+    private func activateModel(_ model: ModelInfo) async {
         selectedModelId = model.id
         downloadComplete = false
 

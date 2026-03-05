@@ -20,9 +20,9 @@ struct OnboardingFlow: View {
     @Environment(UIThemeEngine.self) private var theme: UIThemeEngine
     @Environment(StateManager.self) private var stateManager: StateManager
 
-    /// The WhisperService actor used for model operations during onboarding.
+    /// The transcription engine used for model operations during onboarding.
     /// Passed as a regular property because actors are not Observable.
-    let whisperService: WhisperService
+    let whisperService: any TranscriptionEngine
 
     /// Closure invoked when onboarding is complete and the window should close.
     /// The parent view or window controller sets this to dismiss the onboarding window.
@@ -45,7 +45,7 @@ struct OnboardingFlow: View {
     // MARK: - Model Selection State (Req 13.6, 13.7, 13.8, 13.15)
 
     /// The list of available models fetched from WhisperService
-    @State private var availableModels: [WhisperModelInfo] = []
+    @State private var availableModels: [ModelInfo] = []
 
     /// The ID of the model the user has selected for download
     @State private var selectedModelId: String?

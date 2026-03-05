@@ -37,15 +37,15 @@ struct SettingsView: View {
     @Environment(UIThemeEngine.self) private var theme: UIThemeEngine
 
     @State private var audioDevices: [AudioInputDevice] = []
-    @State private var whisperModels: [WhisperModelInfo] = []
+    @State private var whisperModels: [ModelInfo] = []
     @State private var isRecordingHotkey = false
     @State private var hotkeyError: String?
     @State private var showRestoreDefaultsAlert = false
 
     private let audioEngine: AudioEngine
-    private let whisperService: WhisperService
+    private let whisperService: any TranscriptionEngine
 
-    init(audioEngine: AudioEngine, whisperService: WhisperService) {
+    init(audioEngine: AudioEngine, whisperService: any TranscriptionEngine) {
         self.audioEngine = audioEngine
         self.whisperService = whisperService
     }
@@ -144,7 +144,7 @@ struct SettingsView: View {
 
     // MARK: - Whisper Model Section
 
-    private var availableModels: [WhisperModelInfo] {
+    private var availableModels: [ModelInfo] {
         whisperModels.filter { $0.status == .downloaded || $0.status == .active }
     }
 

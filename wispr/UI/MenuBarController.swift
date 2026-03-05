@@ -50,8 +50,8 @@ final class MenuBarController {
     /// Audio engine for settings view.
     private let audioEngine: AudioEngine
 
-    /// Whisper service for settings and model management views.
-    private let whisperService: WhisperService
+    /// Transcription engine for settings and model management views.
+    private let whisperService: any TranscriptionEngine
 
     /// Permission manager for settings view.
     private let permissionManager: PermissionManager
@@ -83,14 +83,14 @@ final class MenuBarController {
     ///   - settingsStore: The persistent settings store.
     ///   - themeEngine: The UI theme engine for SF Symbol helpers.
     ///   - audioEngine: The audio engine (needed for SettingsView).
-    ///   - whisperService: The whisper service (needed for SettingsView and ModelManagementView).
+    ///   - whisperService: The transcription engine (needed for SettingsView and ModelManagementView).
     ///   - permissionManager: The permission manager (needed for SettingsView).
     init(
         stateManager: StateManager,
         settingsStore: SettingsStore,
         themeEngine: UIThemeEngine = .shared,
         audioEngine: AudioEngine,
-        whisperService: WhisperService,
+        whisperService: any TranscriptionEngine,
         permissionManager: PermissionManager
     ) {
         self.stateManager = stateManager

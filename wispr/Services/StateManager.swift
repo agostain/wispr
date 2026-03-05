@@ -42,7 +42,7 @@ final class StateManager {
     // MARK: - Dependencies
 
     private let audioEngine: AudioEngine
-    private let whisperService: WhisperService
+    private let whisperService: any TranscriptionEngine
     private let textInsertionService: TextInsertionService
     private let hotkeyMonitor: HotkeyMonitor
     private let permissionManager: PermissionManager
@@ -60,14 +60,14 @@ final class StateManager {
     ///
     /// - Parameters:
     ///   - audioEngine: The audio capture engine.
-    ///   - whisperService: The on-device transcription service.
+    ///   - whisperService: The on-device transcription engine.
     ///   - textInsertionService: The text insertion service.
     ///   - hotkeyMonitor: The global hotkey monitor.
     ///   - permissionManager: The permission manager.
     ///   - settingsStore: The persistent settings store.
     init(
         audioEngine: AudioEngine,
-        whisperService: WhisperService,
+        whisperService: any TranscriptionEngine,
         textInsertionService: TextInsertionService,
         hotkeyMonitor: HotkeyMonitor,
         permissionManager: PermissionManager,
