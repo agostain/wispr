@@ -61,7 +61,10 @@ final class UpdateChecker {
                 return
             }
 
-            let releasePageURL = URL(string: release.htmlURL)!
+        guard let releasePageURL = URL(string: release.htmlURL) else {
+            Log.app.debug("UpdateChecker — invalid htmlURL for \(release.tagName)")
+            return
+        }
 
             availableUpdate = AppUpdateInfo(
                 version: release.tagName,
