@@ -83,7 +83,7 @@ struct ModelManagementView: View {
         var items: [ModelListItem] = []
         for provider in seen {
             items.append(.header(provider))
-            for model in groups[provider]! {
+            for model in groups[provider, default: []] {
                 items.append(.model(model))
             }
         }
