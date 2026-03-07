@@ -140,21 +140,21 @@ struct ModelRowView: View {
         Group {
             switch model.status {
             case .active:
-                Image(systemName: "checkmark")
+                Image(systemName: SFSymbols.checkmarkPlain)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white)
                     .frame(width: iconSize, height: iconSize)
                     .background(theme.successColor.gradient, in: Circle())
 
             case .downloaded:
-                Image(systemName: "arrow.down")
+                Image(systemName: SFSymbols.arrowDown)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
                     .frame(width: iconSize, height: iconSize)
                     .background(theme.accentColor.gradient, in: Circle())
 
             case .notDownloaded:
-                Image(systemName: "icloud.and.arrow.down")
+                Image(systemName: SFSymbols.cloudDownload)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(theme.secondaryTextColor.opacity(0.5))
                     .frame(width: iconSize, height: iconSize)
@@ -183,7 +183,7 @@ struct ModelRowView: View {
         case .downloaded:
             StatusPillView(
                 label: "Downloaded",
-                symbolName: "checkmark.circle",
+                symbolName: SFSymbols.checkmarkCircle,
                 foregroundColor: theme.accentColor,
                 backgroundColor: theme.accentColor.opacity(0.12)
             )
