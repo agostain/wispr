@@ -6,32 +6,11 @@
 //
 
 import Foundation
-import SwiftUI
 
 /// The ASR engine that provides a model.
 enum ModelProvider: String, Sendable, Equatable, Hashable, CaseIterable {
     case whisper = "OpenAI Whisper"
     case nvidiaParakeet = "NVIDIA Parakeet"
-
-    /// Centralized SF Symbol names for model providers.
-    private enum IconNames {
-        static let whisper = "waveform"
-        static let nvidiaParakeet = "bird"
-    }
-
-    var icon: String {
-        switch self {
-        case .whisper: IconNames.whisper
-        case .nvidiaParakeet: IconNames.nvidiaParakeet
-        }
-    }
-
-    var tintColor: Color {
-        switch self {
-        case .whisper: .blue
-        case .nvidiaParakeet: .green
-        }
-    }
 }
 
 /// Information about a transcription model

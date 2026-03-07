@@ -9,6 +9,24 @@
 
 import SwiftUI
 
+// MARK: - ModelProvider UI Properties
+
+extension ModelProvider {
+    var icon: String {
+        switch self {
+        case .whisper: "waveform"
+        case .nvidiaParakeet: "bird"
+        }
+    }
+
+    var tintColor: Color {
+        switch self {
+        case .whisper: .blue
+        case .nvidiaParakeet: .green
+        }
+    }
+}
+
 /// Discriminated union for flattening grouped model data into a single `ForEach`.
 private enum ModelListItem: Identifiable {
     case header(ModelProvider)
