@@ -37,12 +37,14 @@ struct OnboardingModelSelectionStep: View {
                 color: downloadComplete ? theme.successColor : theme.accentColor
             )
 
-            Text("Downloading Model")
+            Text(downloadComplete ? "Model Ready" : "Downloading Model")
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundStyle(theme.primaryTextColor)
 
-            Text("We're downloading NVIDIA Parakeet V3, a fast and accurate speech recognition model. You can switch to a different model anytime in Model Management.")
+            Text(downloadComplete
+                ? "NVIDIA Parakeet V3 is ready to use. You can switch to a different model anytime in Model Management."
+                : "We're downloading NVIDIA Parakeet V3, a fast and accurate speech recognition model. You can switch to a different model anytime in Model Management.")
                 .font(.body)
                 .foregroundStyle(theme.secondaryTextColor)
                 .multilineTextAlignment(.center)
