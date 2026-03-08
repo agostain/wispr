@@ -22,10 +22,10 @@ struct AccessibilityLabelGenerationTests {
     // MARK: - Recording Overlay Labels
 
     /// Mirrors RecordingOverlayView.accessibilityLabelForState
-    private func overlayAccessibilityLabel(for state: AppStateType) -> String {
+    private func overlayAccessibilityLabel(for state: AppStateType, isLoadingSlow: Bool = false) -> String {
         switch state {
         case .loading:
-            "Loading"
+            isLoadingSlow ? "Still loading model" : "Loading"
         case .recording:
             "Recording in progress"
         case .processing:
@@ -62,6 +62,18 @@ struct AccessibilityLabelGenerationTests {
     func testOverlayIdleLabel() {
         let label = overlayAccessibilityLabel(for: .idle)
         #expect(!label.isEmpty, "Idle label should not be empty")
+    }
+
+    @Test("Overlay label for loading state before slow threshold")
+    func testOverlayLoadingLabelNormal() {
+        let label = overlayAccessibilityLabel(for: .loading, isLoadingSlow: false)
+        #expect(label == "Loading")
+    }
+
+    @Test("Overlay label for loading state after slow threshold")
+    func testOverlayLoadingLabelSlow() {
+        let label = overlayAccessibilityLabel(for: .loading, isLoadingSlow: true)
+        #expect(label == "Still loading model")
     }
 
     @Test("All overlay labels are non-empty for every state",

@@ -167,11 +167,23 @@ struct RecordingOverlayAccessibilityTests {
         #expect(label == "Error: ")
     }
 
+    @Test("Accessibility label for loading state before slow threshold")
+    func testAccessibilityLabelLoadingNormal() {
+        let label = accessibilityLabel(for: .loading, isLoadingSlow: false)
+        #expect(label == "Loading")
+    }
+
+    @Test("Accessibility label for loading state after slow threshold")
+    func testAccessibilityLabelLoadingSlow() {
+        let label = accessibilityLabel(for: .loading, isLoadingSlow: true)
+        #expect(label == "Still loading model")
+    }
+
     /// Mirrors the `accessibilityLabelForState` computed property from RecordingOverlayView.
-    private func accessibilityLabel(for state: AppStateType) -> String {
+    private func accessibilityLabel(for state: AppStateType, isLoadingSlow: Bool = false) -> String {
         switch state {
         case .loading:
-            "Loading"
+            isLoadingSlow ? "Still loading model" : "Loading"
         case .recording:
             "Recording in progress"
         case .processing:
