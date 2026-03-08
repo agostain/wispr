@@ -211,8 +211,13 @@ extension ParakeetService: TranscriptionEngine {
         let isEou = model.id == ModelInfo.KnownID.parakeetEou
         let estimatedSize = model.estimatedSize
         let expectedFileCount = isEou ? Self.eouExpectedFileCount : Self.expectedFileCount
-        let sdkLeaf = AsrModels.defaultCacheDirectory(for: .v3).lastPathComponent
-        let cacheDir = isEou ? ModelPaths.parakeetEou : ModelPaths.parakeetV3(sdkLeafName: sdkLeaf)
+        let cacheDir: URL
+        if isEou {
+            cacheDir = ModelPaths.parakeetEou
+        } else {
+            let sdkLeaf = AsrModels.defaultCacheDirectory(for: .v3).lastPathComponent
+            cacheDir = ModelPaths.parakeetV3(sdkLeafName: sdkLeaf)
+        }
 
         Task {
             defer { self.downloadTasks.removeValue(forKey: model.id) }
