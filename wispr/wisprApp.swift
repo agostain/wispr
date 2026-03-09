@@ -181,8 +181,10 @@ final class WisprAppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate 
         }
 
         // Check for app updates (non-blocking, runs in parallel)
+        Log.updateChecker.info("Scheduling update check from applicationDidFinishLaunching")
         Task {
             await updateChecker.checkForUpdate()
+            Log.updateChecker.info("Update check task completed — availableUpdate: \(self.updateChecker.availableUpdate?.version ?? "none")")
         }
 
         // Requirement 13.1, 13.12: Show onboarding on first launch

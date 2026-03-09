@@ -10,6 +10,7 @@
 import AppKit
 import SwiftUI
 import Observation
+import os
 
 /// Manages the NSStatusItem in the macOS menu bar.
 ///
@@ -256,10 +257,12 @@ final class MenuBarController {
     /// Refreshes the update menu item visibility and title based on `updateChecker.availableUpdate`.
     private func refreshUpdateMenuItem() {
         if let update = updateChecker.availableUpdate {
+            Log.updateChecker.info("Menu item shown — update available: \(update.version)")
             updateMenuItem.title = "Update Available: \(update.version)"
             updateMenuItem.isHidden = false
             updateSeparator.isHidden = false
         } else {
+            Log.updateChecker.debug("Menu item hidden — no update available")
             updateMenuItem.isHidden = true
             updateSeparator.isHidden = true
         }
@@ -267,7 +270,11 @@ final class MenuBarController {
 
     /// Opens the download URL for the available update.
     func openUpdateDownload() {
-        guard let update = updateChecker.availableUpdate else { return }
+        guard let update = updateChecker.availableUpdate else {
+            Log.updateChecker.error("openUpdateDownload called but no update available")
+            return
+        }
+        Log.updateChecker.info("User opening download URL: \(update.downloadURL.absoluteString)")
         NSWorkspace.shared.open(update.downloadURL)
     }
 

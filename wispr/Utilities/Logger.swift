@@ -21,4 +21,5 @@ nonisolated enum Log {
     static let audioEngine = Logger(subsystem: subsystem, category: "AudioEngine")
     static let whisperService = Logger(subsystem: subsystem, category: "WhisperService")
     static let stateManager = Logger(subsystem: subsystem, category: "StateManager")
+    static let updateChecker = Logger(subsystem: subsystem, category: "UpdateChecker")
 }
