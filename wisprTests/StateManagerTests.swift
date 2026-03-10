@@ -408,4 +408,57 @@ struct StateManagerTests {
             Issue.record("Expected error from denied permissions")
         }
     }
+
+    // MARK: - switchActiveModel
+
+    @Test("switchActiveModel no-ops when switching to the current model")
+    func testSwitchActiveModelNoOp() async throws {
+        let settingsStore = SettingsStore(
+            defaults: UserDefaults(suiteName: "test.wispr.switch.\(UUID().uuidString)")!
+        )
+        settingsStore.activeModelName = "tiny"
+
+        let sm = StateManager(
+            audioEngine: AudioEngine(),
+            whisperService: WhisperService(),
+            textInsertionService: TextInsertionService(),
+            hotkeyMonitor: HotkeyMonitor(),
+            permissionManager: PermissionManager(),
+            settingsStore: settingsStore
+        )
+        sm.markAsReady()
+
+        // Switching to the already-active model should return immediately
+        // without throwing (WhisperService.switchModel is never called).
+        try await sm.switchActiveModel(to: "tiny")
+
+        #expect(settingsStore.activeModelName == "tiny")
+    }
+
+    @Test("switchActiveModel propagates engine errors and does not persist the new name")
+    func testSwitchActiveModelError() async {
+        let settingsStore = SettingsStore(
+            defaults: UserDefaults(suiteName: "test.wispr.switch.err.\(UUID().uuidString)")!
+        )
+        settingsStore.activeModelName = "tiny"
+
+        let sm = StateManager(
+            audioEngine: AudioEngine(),
+            whisperService: WhisperService(),
+            textInsertionService: TextInsertionService(),
+            hotkeyMonitor: HotkeyMonitor(),
+            permissionManager: PermissionManager(),
+            settingsStore: settingsStore
+        )
+        sm.markAsReady()
+
+        // Switching to a model that isn't downloaded should throw.
+        // The settingsStore should still point to the original model.
+        await #expect(throws: (any Error).self) {
+            try await sm.switchActiveModel(to: "nonexistent-model")
+        }
+
+        #expect(settingsStore.activeModelName == "tiny",
+                "activeModelName should remain unchanged after a failed switch")
+    }
 }

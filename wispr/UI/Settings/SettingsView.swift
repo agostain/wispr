@@ -36,6 +36,7 @@ struct SettingsView: View {
     @Environment(SettingsStore.self) private var settingsStore: SettingsStore
     @Environment(UIThemeEngine.self) private var theme: UIThemeEngine
     @Environment(UpdateChecker.self) private var updateChecker: UpdateChecker
+    @Environment(StateManager.self) private var stateManager: StateManager
 
     @State private var audioDevices: [AudioInputDevice] = []
     @State private var whisperModels: [ModelInfo] = []
@@ -43,12 +44,19 @@ struct SettingsView: View {
     @State private var hotkeyError: String?
     @State private var showRestoreDefaultsAlert = false
 
+    /// The model ID currently being activated from the Settings picker.
+    @State private var activatingModelId: String?
+
+    /// Local selection state for the model picker, synced via .onChange/.task.
+    @State private var selectedModelId: String = ""
+
     private let audioEngine: AudioEngine
     private let whisperService: any TranscriptionEngine
 
-    init(audioEngine: AudioEngine, whisperService: any TranscriptionEngine) {
+    init(audioEngine: AudioEngine, whisperService: any TranscriptionEngine, initialModelId: String) {
         self.audioEngine = audioEngine
         self.whisperService = whisperService
+        self._selectedModelId = State(initialValue: initialModelId)
     }
 
     var body: some View {
@@ -155,8 +163,7 @@ struct SettingsView: View {
                 Text("No models downloaded")
                     .foregroundStyle(.secondary)
             } else {
-                @Bindable var store = settingsStore
-                Picker("Active Model", selection: $store.activeModelName) {
+                Picker("Active Model", selection: $selectedModelId) {
                     ForEach(availableModels) { model in
                         HStack {
                             Text(model.displayName)
@@ -166,7 +173,35 @@ struct SettingsView: View {
                         .tag(model.id)
                     }
                 }
+                .disabled(activatingModelId != nil)
+                .overlay(alignment: .trailing) {
+                    if activatingModelId != nil {
+                        ProgressView()
+                            .controlSize(.small)
+                            .padding(.trailing, 4)
+                    }
+                }
                 .accessibilityHint("Select the speech recognition model to use")
+                .onChange(of: selectedModelId) { _, newModelId in
+                    guard newModelId != settingsStore.activeModelName,
+                          !newModelId.isEmpty else { return }
+                    activatingModelId = newModelId
+                }
+                .task(id: activatingModelId) {
+                    guard let modelId = activatingModelId else { return }
+                    do {
+                        try await stateManager.switchActiveModel(to: modelId)
+                    } catch {
+                        // Revert picker to the actual active model on failure
+                        selectedModelId = settingsStore.activeModelName
+                    }
+                    await loadWhisperModels()
+                    activatingModelId = nil
+                }
+                .onChange(of: settingsStore.activeModelName) { _, newName in
+                    guard activatingModelId == nil else { return }
+                    selectedModelId = newName
+                }
             }
         } header: {
             SectionHeader(
@@ -346,15 +381,26 @@ private struct SettingsPreview: View {
     @State private var settingsStore = PreviewMocks.makeSettingsStore()
     @State private var theme = PreviewMocks.makeTheme()
     @State private var updateChecker = PreviewMocks.makeUpdateChecker()
+    @State private var stateManager: StateManager
+
+    private let whisperService: any TranscriptionEngine
+
+    init() {
+        let service = PreviewMocks.makeWhisperService()
+        self.whisperService = service
+        self._stateManager = State(initialValue: PreviewMocks.makeStateManager(whisperService: service))
+    }
 
     var body: some View {
         SettingsView(
             audioEngine: PreviewMocks.makeAudioEngine(),
-            whisperService: PreviewMocks.makeWhisperService()
+            whisperService: whisperService,
+            initialModelId: settingsStore.activeModelName
         )
         .environment(settingsStore)
         .environment(theme)
         .environment(updateChecker)
+        .environment(stateManager)
     }
 }
 
