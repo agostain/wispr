@@ -170,6 +170,11 @@ actor CompositeTranscriptionEngine: TranscriptionEngine {
         return try await engines[idx].transcribe(audioSamples, language: language)
     }
 
+    func supportsEndOfUtteranceDetection() async -> Bool {
+        guard let idx = activeEngineIndex else { return false }
+        return await engines[idx].supportsEndOfUtteranceDetection()
+    }
+
     func transcribeStream(
         _ audioStream: AsyncStream<[Float]>,
         language: TranscriptionLanguage

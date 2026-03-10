@@ -157,6 +157,8 @@ actor PreviewTranscriptionEngine: TranscriptionEngine {
     func transcribeStream(_ audioStream: AsyncStream<[Float]>, language: TranscriptionLanguage) async -> AsyncThrowingStream<TranscriptionResult, Error> {
         AsyncThrowingStream { $0.finish() }
     }
+
+    func supportsEndOfUtteranceDetection() async -> Bool { false }
 }
 
 #endif

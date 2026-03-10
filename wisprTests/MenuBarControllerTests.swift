@@ -13,6 +13,13 @@ import AppKit
 
 // MARK: - Test Helpers
 
+/// No-op HTTP provider for test isolation — never makes real network requests.
+private struct NoOpHTTPProvider: HTTPDataProvider {
+    func data(from url: URL) async throws -> (Data, URLResponse) {
+        throw URLError(.notConnectedToInternet)
+    }
+}
+
 /// Creates a MenuBarController with isolated test dependencies.
 @MainActor
 private func createTestController(

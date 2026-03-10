@@ -105,6 +105,13 @@ struct SettingsView: View {
                     .font(.callout)
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
+
+            @Bindable var store = settingsStore
+            Toggle("Hands-Free Mode", isOn: $store.handsFreeMode)
+                .accessibilityHint(
+                    "When enabled, press the hotkey once to start recording and again to stop. " +
+                    "When disabled, hold the hotkey to record."
+                )
         } header: {
             SectionHeader(
                 title: "Hotkey Configuration",
@@ -282,6 +289,7 @@ struct SettingsView: View {
         settingsStore.languageMode = .autoDetect
         settingsStore.showRecordingOverlay = true
         settingsStore.launchAtLogin = false
+        settingsStore.handsFreeMode = false
         hotkeyError = nil
         isRecordingHotkey = false
     }

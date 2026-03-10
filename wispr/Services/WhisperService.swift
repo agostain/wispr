@@ -590,6 +590,11 @@ actor WhisperService {
 
 extension WhisperService: TranscriptionEngine {
 
+    /// WhisperKit does not support end-of-utterance detection.
+    func supportsEndOfUtteranceDetection() async -> Bool {
+        return false
+    }
+
     /// Streaming transcription stub — collects all audio chunks, then
     /// delegates to the batch `transcribe(_:language:)` method.
     ///

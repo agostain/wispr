@@ -35,6 +35,7 @@ final class RecordingOverlayPanel {
 
     private var panel: NSPanel?
     private let stateManager: StateManager
+    private let settingsStore: SettingsStore
     private let themeEngine: UIThemeEngine
 
     /// Whether the panel is currently visible.
@@ -46,9 +47,11 @@ final class RecordingOverlayPanel {
     ///
     /// - Parameters:
     ///   - stateManager: The state manager driving overlay visibility.
+    ///   - settingsStore: The settings store for mode-aware accessibility hints.
     ///   - themeEngine: The theme engine for accessibility adaptations.
-    init(stateManager: StateManager, themeEngine: UIThemeEngine) {
+    init(stateManager: StateManager, settingsStore: SettingsStore, themeEngine: UIThemeEngine) {
         self.stateManager = stateManager
+        self.settingsStore = settingsStore
         self.themeEngine = themeEngine
     }
 
@@ -105,6 +108,7 @@ final class RecordingOverlayPanel {
     private func createPanel() {
         let overlayView = RecordingOverlayView()
             .environment(stateManager)
+            .environment(settingsStore)
             .environment(themeEngine)
 
         let hostingView = NSHostingView(rootView: overlayView)

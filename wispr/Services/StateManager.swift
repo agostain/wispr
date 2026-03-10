@@ -54,6 +54,9 @@ final class StateManager {
     /// Task for observing settings changes to sync language mode.
     private var languageSyncTask: Task<Void, Never>?
 
+    /// Task for monitoring end-of-utterance detection in hands-free mode.
+    private var eouMonitoringTask: Task<Void, Never>?
+
     // MARK: - Initialization
 
     /// Creates a new StateManager with all required service dependencies.
@@ -129,16 +132,118 @@ final class StateManager {
         hotkeyMonitor.onHotkeyDown = { [weak self] in
             guard let self else { return }
             Task { @MainActor in
-                await self.beginRecording()
+                if self.settingsStore.handsFreeMode {
+                    await self.toggleRecording()
+                } else {
+                    await self.beginRecording()
+                }
             }
         }
 
         hotkeyMonitor.onHotkeyUp = { [weak self] in
             guard let self else { return }
             Task { @MainActor in
-                await self.endRecording()
+                if !self.settingsStore.handsFreeMode {
+                    await self.endRecording()
+                }
+                // In hands-free mode, key-up is intentionally ignored.
             }
         }
+    }
+
+    // MARK: - Hands-Free Toggle
+
+    /// Toggles recording state for hands-free mode.
+    /// If idle, starts recording (with EOU monitoring when supported).
+    /// If recording, stops recording.
+    /// Ignores calls during .loading, .processing, or .error states.
+    func toggleRecording() async {
+        switch appState {
+        case .idle:
+            await beginRecording()
+            if appState == .recording {
+                await startEouMonitoringIfSupported()
+            }
+        case .recording:
+            cancelEouMonitoring()
+            await endRecording()
+        case .loading, .processing, .error:
+            break
+        }
+    }
+
+    // MARK: - EOU Monitoring
+
+    /// Checks if the active transcription engine supports EOU detection
+    /// and, if so, starts a background task that monitors for end-of-utterance.
+    private func startEouMonitoringIfSupported() async {
+        let supportsEou = await whisperService.supportsEndOfUtteranceDetection()
+        guard supportsEou else { return }
+
+        eouMonitoringTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                let resultStream = await self.whisperService.transcribeStream(
+                    await self.audioEngine.captureStream,
+                    language: self.currentLanguage
+                )
+
+                var finalResult: TranscriptionResult?
+                for try await result in resultStream {
+                    if result.isEndOfUtterance {
+                        finalResult = result
+                        break
+                    }
+                }
+
+                guard let finalResult, !Task.isCancelled, self.appState == .recording else {
+                    return
+                }
+
+                _ = await self.audioEngine.stopCapture()
+                self.audioLevelStream = nil
+                self.appState = .processing
+
+                NSAccessibility.post(
+                    element: NSApp as Any,
+                    notification: .announcementRequested,
+                    userInfo: [.announcement: "Speech ended, processing"]
+                )
+
+                guard !finalResult.text.isEmpty else {
+                    await self.resetToIdle()
+                    return
+                }
+
+                do {
+                    try await self.textInsertionService.insertText(finalResult.text)
+                    NSAccessibility.post(
+                        element: NSApp as Any,
+                        notification: .announcementRequested,
+                        userInfo: [.announcement: "Text inserted"]
+                    )
+                    await self.resetToIdle()
+                } catch {
+                    let pasteboard = NSPasteboard.general
+                    pasteboard.clearContents()
+                    pasteboard.setString(finalResult.text, forType: .string)
+                    await self.handleError(
+                        .textInsertionFailed(
+                            "Text insertion failed. The transcribed text has been copied to your clipboard."
+                        )
+                    )
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                Log.stateManager.warning("EOU monitoring failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    /// Cancels any active EOU monitoring task.
+    private func cancelEouMonitoring() {
+        eouMonitoringTask?.cancel()
+        eouMonitoringTask = nil
     }
 
     // MARK: - State Machine
@@ -381,6 +486,7 @@ final class StateManager {
     func resetToIdle() async {
         errorDismissTask?.cancel()
         errorDismissTask = nil
+        cancelEouMonitoring()
         appState = .idle
         errorMessage = nil
         audioLevelStream = nil

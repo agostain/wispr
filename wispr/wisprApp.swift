@@ -153,6 +153,7 @@ final class WisprAppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate 
         // Create recording overlay panel
         overlayPanel = RecordingOverlayPanel(
             stateManager: sm,
+            settingsStore: settingsStore,
             themeEngine: themeEngine
         )
 

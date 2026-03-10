@@ -28,6 +28,7 @@ actor AudioEngine {
     private var engine: AVAudioEngine?
     private var audioBuffer: [Float] = []
     private var levelContinuation: AsyncStream<Float>.Continuation?
+    private var audioContinuation: AsyncStream<[Float]>.Continuation?
     private var selectedDeviceID: AudioDeviceID?
     private var isCapturing = false
     private var audioConverter: AVAudioConverter?
@@ -181,6 +182,19 @@ actor AudioEngine {
         Log.audioEngine.debug("cancelCapture — discarding audio buffer")
         teardownEngine()
     }
+
+    /// Returns an AsyncStream of raw audio chunks (16kHz Float32) from the active capture session.
+    /// Used by EOU monitoring to feed audio to the streaming transcription engine.
+    /// Returns a finished stream if no capture is active.
+    var captureStream: AsyncStream<[Float]> {
+        let (stream, continuation) = AsyncStream.makeStream(of: [Float].self)
+        if isCapturing {
+            self.audioContinuation = continuation
+        } else {
+            continuation.finish()
+        }
+        return stream
+    }
     
     // MARK: - Device Monitoring & Fallback
     
@@ -259,6 +273,8 @@ actor AudioEngine {
         isCapturing = false
         levelContinuation?.finish()
         levelContinuation = nil
+        audioContinuation?.finish()
+        audioContinuation = nil
         engine.stop()
         engine.inputNode.removeTap(onBus: 0)
         self.engine = nil
@@ -301,6 +317,9 @@ actor AudioEngine {
         
         // Send level to the stream
         continuation.yield(normalizedLevel)
+        
+        // Also yield raw audio chunks for streaming transcription (EOU monitoring)
+        audioContinuation?.yield(bufferData)
     }
 }
 

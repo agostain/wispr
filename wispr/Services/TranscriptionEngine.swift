@@ -65,6 +65,12 @@ protocol TranscriptionEngine: Actor {
         _ audioStream: AsyncStream<[Float]>,
         language: TranscriptionLanguage
     ) async -> AsyncThrowingStream<TranscriptionResult, Error>
+
+    /// Whether the currently loaded model supports end-of-utterance detection.
+    /// When true, transcribeStream() will finish its output when the user
+    /// stops speaking. When false, transcribeStream() only finishes when
+    /// the input audio stream ends.
+    func supportsEndOfUtteranceDetection() async -> Bool
 }
 
 // MARK: - Default Parameter Convenience

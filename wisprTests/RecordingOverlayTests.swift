@@ -38,6 +38,7 @@ private func createTestOverlayPanel() -> (RecordingOverlayPanel, StateManager, U
 
     let panel = RecordingOverlayPanel(
         stateManager: stateManager,
+        settingsStore: settingsStore,
         themeEngine: themeEngine
     )
 

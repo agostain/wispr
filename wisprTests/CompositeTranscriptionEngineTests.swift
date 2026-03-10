@@ -128,6 +128,8 @@ actor MockTranscriptionEngine: TranscriptionEngine {
         continuation.finish()
         return stream
     }
+
+    func supportsEndOfUtteranceDetection() async -> Bool { false }
 }
 
 // MARK: - Helper

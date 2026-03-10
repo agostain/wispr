@@ -23,6 +23,7 @@ import SwiftUI
 /// **Validates**: Requirements 9.1–9.5, 14.3, 14.8, 14.9, 14.10, 14.12
 struct RecordingOverlayView: View {
     @Environment(StateManager.self) private var stateManager: StateManager
+    @Environment(SettingsStore.self) private var settingsStore: SettingsStore
     @Environment(UIThemeEngine.self) private var theme: UIThemeEngine
 
     /// Recent audio level samples for the level meter visualization.
@@ -74,7 +75,11 @@ struct RecordingOverlayView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabelForState)
-        .accessibilityHint("Release the hotkey to stop recording")
+        .accessibilityHint(
+            settingsStore.handsFreeMode
+                ? "Press the hotkey again to stop recording, or wait for auto-stop"
+                : "Release the hotkey to stop recording"
+        )
         .accessibilityAddTraits(.updatesFrequently)
     }
 
@@ -313,6 +318,7 @@ private struct RecordingOverlayPreview: View {
     var body: some View {
         RecordingOverlayView()
             .environment(stateManager)
+            .environment(PreviewMocks.makeSettingsStore())
             .environment(theme)
             .frame(width: 280, height: 100)
             .background(.black.opacity(0.3))
