@@ -501,6 +501,21 @@ final class StateManager {
         }
     }
 
+    /// Switches the active transcription model.
+    ///
+    /// Unloads the current model, loads the new one, and persists the choice.
+    /// Used by both SettingsView and ModelManagementView.
+    ///
+    /// - Parameter modelName: The model ID to switch to.
+    /// - Throws: Propagates errors from the transcription engine.
+    func switchActiveModel(to modelName: String) async throws {
+        guard modelName != settingsStore.activeModelName else { return }
+        Log.stateManager.debug("switchActiveModel — switching to '\(modelName)'")
+        try await whisperService.switchModel(to: modelName)
+        settingsStore.activeModelName = modelName
+        Log.stateManager.debug("switchActiveModel — '\(modelName)' active")
+    }
+
     /// Loads the persisted active model at startup.
     ///
     /// Transitions `.loading` → `.idle` on success, or `.loading` → `.error` → `.idle`

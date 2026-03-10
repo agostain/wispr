@@ -64,11 +64,14 @@ enum PreviewMocks {
     /// Creates a real StateManager with safe, ephemeral dependencies.
     /// setupHotkeyCallbacks() just sets closures (no Carbon registration).
     /// startLanguageSync() starts a benign observation Task.
-    static func makeStateManager(settingsStore: SettingsStore? = nil) -> StateManager {
+    static func makeStateManager(
+        settingsStore: SettingsStore? = nil,
+        whisperService: (any TranscriptionEngine)? = nil
+    ) -> StateManager {
         let store = settingsStore ?? makeSettingsStore()
         return StateManager(
             audioEngine: makeAudioEngine(),
-            whisperService: makeWhisperService(),
+            whisperService: whisperService ?? makeWhisperService(),
             textInsertionService: makeTextInsertionService(),
             hotkeyMonitor: makeHotkeyMonitor(),
             permissionManager: makePermissionManager(),

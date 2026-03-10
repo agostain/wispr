@@ -481,7 +481,8 @@ final class MenuBarController {
 
         let settingsView = SettingsView(
             audioEngine: audioEngine,
-            whisperService: transcriptionEngine
+            whisperService: transcriptionEngine,
+            initialModelId: settingsStore.activeModelName
         )
         .environment(settingsStore)
         .environment(themeEngine)

@@ -8,6 +8,7 @@
 import Foundation
 import Observation
 import ServiceManagement
+import os
 
 @MainActor
 @Observable
@@ -169,7 +170,8 @@ final class SettingsStore {
     // MARK: - Launch at Login
     
     /// Registers or unregisters the app as a login item using ServiceManagement.
-    /// If registration fails, reverts the `launchAtLogin` property.
+    /// After the operation, reads back the actual system state so the toggle
+    /// always reflects reality.
     /// Requirements: 10.3, 10.4
     func updateLaunchAtLogin(_ enabled: Bool) {
         let service = SMAppService.mainApp
@@ -177,12 +179,21 @@ final class SettingsStore {
             if enabled {
                 try service.register()
             } else {
-                try service.unregister()
+                // unregister() throws if the app was never registered — that's
+                // not a real failure, the desired state (not registered) is already true.
+                if service.status != .notRegistered {
+                    try service.unregister()
+                }
             }
         } catch {
-            // Revert on failure — use isLoading guard to prevent re-triggering didSet save
+            Log.app.error("Failed to \(enabled ? "register" : "unregister") login item: \(error)")
+        }
+        
+        // Always sync back to the actual system state
+        let actualState = service.status == .enabled
+        if launchAtLogin != actualState {
             isLoading = true
-            launchAtLogin = !enabled
+            launchAtLogin = actualState
             isLoading = false
             save()
         }

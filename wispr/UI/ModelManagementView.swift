@@ -49,6 +49,7 @@ private enum ModelListItem: Identifiable {
 struct ModelManagementView: View {
     @Environment(SettingsStore.self) private var settingsStore: SettingsStore
     @Environment(UIThemeEngine.self) private var theme: UIThemeEngine
+    @Environment(StateManager.self) private var stateManager: StateManager
 
     /// The WhisperService actor used for model operations.
     private let whisperService: any TranscriptionEngine
@@ -275,8 +276,7 @@ struct ModelManagementView: View {
 
         activatingModelId = model.id
         do {
-            try await whisperService.switchModel(to: model.id)
-            settingsStore.activeModelName = model.id
+            try await stateManager.switchActiveModel(to: model.id)
             await refreshModels()
             activatingModelId = nil
         } catch {
@@ -344,10 +344,20 @@ private struct ModelManagementPreview: View {
     @State private var settingsStore = PreviewMocks.makeSettingsStore()
     @State private var theme = PreviewMocks.makeTheme()
 
+    private let whisperService: any TranscriptionEngine
+    @State private var stateManager: StateManager
+
+    init() {
+        let service = PreviewMocks.makeWhisperService()
+        self.whisperService = service
+        self._stateManager = State(initialValue: PreviewMocks.makeStateManager(whisperService: service))
+    }
+
     var body: some View {
-        ModelManagementView(whisperService: PreviewMocks.makeWhisperService())
+        ModelManagementView(whisperService: whisperService)
             .environment(settingsStore)
             .environment(theme)
+            .environment(stateManager)
             .frame(width: 620, height: 700)
     }
 }
