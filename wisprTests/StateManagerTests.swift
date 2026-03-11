@@ -461,4 +461,111 @@ struct StateManagerTests {
         #expect(settingsStore.activeModelName == "tiny",
                 "activeModelName should remain unchanged after a failed switch")
     }
+
+    // MARK: - Hands-Free / toggleRecording
+
+    /// Helper that also returns the SettingsStore for hands-free tests.
+    @MainActor
+    private static func makeHandsFreeStateManager(
+        permissionsGranted: Bool = true
+    ) -> (StateManager, SettingsStore) {
+        let settingsStore = SettingsStore(
+            defaults: UserDefaults(suiteName: "test.wispr.handsfree.\(UUID().uuidString)")!
+        )
+        let pm = PermissionManager()
+        if permissionsGranted {
+            pm.microphoneStatus = .authorized
+            pm.accessibilityStatus = .authorized
+        } else {
+            pm.microphoneStatus = .denied
+            pm.accessibilityStatus = .denied
+        }
+        let sm = StateManager(
+            audioEngine: AudioEngine(),
+            whisperService: WhisperService(),
+            textInsertionService: TextInsertionService(),
+            hotkeyMonitor: HotkeyMonitor(),
+            permissionManager: pm,
+            settingsStore: settingsStore
+        )
+        sm.markAsReady()
+        return (sm, settingsStore)
+    }
+
+    @Test("toggleRecording from idle starts recording")
+    func testToggleRecordingFromIdleStartsRecording() async {
+        let (sm, _) = Self.makeHandsFreeStateManager()
+
+        #expect(sm.appState == .idle)
+
+        await sm.toggleRecording()
+
+        // In test environment, audio engine may fail (no real mic),
+        // so state is either .recording or .error.
+        let valid = sm.appState == .recording || {
+            if case .error = sm.appState { return true }
+            return false
+        }()
+        #expect(valid, "toggleRecording from idle should attempt recording")
+    }
+
+    @Test("toggleRecording from recording stops recording and returns to idle")
+    func testToggleRecordingFromRecordingStops() async {
+        let (sm, _) = Self.makeHandsFreeStateManager()
+
+        // Force into recording state
+        sm.appState = .recording
+
+        await sm.toggleRecording()
+
+        // endRecording with no audio → resets to idle
+        #expect(sm.appState == .idle)
+    }
+
+    @Test("toggleRecording is ignored during loading state")
+    func testToggleRecordingIgnoredWhileLoading() async {
+        let (sm, _) = Self.makeHandsFreeStateManager()
+        sm.appState = .loading
+
+        await sm.toggleRecording()
+
+        #expect(sm.appState == .loading)
+    }
+
+    @Test("toggleRecording is ignored during processing state")
+    func testToggleRecordingIgnoredWhileProcessing() async {
+        let (sm, _) = Self.makeHandsFreeStateManager()
+        sm.appState = .processing
+
+        await sm.toggleRecording()
+
+        #expect(sm.appState == .processing)
+    }
+
+    @Test("toggleRecording is ignored during error state")
+    func testToggleRecordingIgnoredWhileError() async {
+        let (sm, _) = Self.makeHandsFreeStateManager()
+        sm.appState = .error("test error")
+
+        await sm.toggleRecording()
+
+        if case .error = sm.appState {
+            // Expected — unchanged
+        } else {
+            Issue.record("toggleRecording should not change error state")
+        }
+    }
+
+    @Test("toggleRecording from recording with no permissions still returns to idle")
+    func testToggleRecordingStopsEvenWithoutPermissions() async {
+        let (sm, _) = Self.makeHandsFreeStateManager(permissionsGranted: false)
+
+        // Force into recording state (as if permissions were granted earlier)
+        sm.appState = .recording
+
+        await sm.toggleRecording()
+
+        // endRecording with empty audio → idle
+        #expect(sm.appState == .idle)
+    }
 }
