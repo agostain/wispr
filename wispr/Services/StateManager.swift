@@ -231,7 +231,7 @@ final class StateManager {
                     pasteboard.setString(finalResult.text, forType: .string)
                     await self.handleError(
                         .textInsertionFailed(
-                            "Text insertion failed. The transcribed text has been copied to your clipboard."
+                            "Text insertion failed. The transcribed text has been copied to your clipboard for manual pasting.."
                         )
                     )
                 }
