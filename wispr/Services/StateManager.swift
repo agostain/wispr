@@ -200,9 +200,14 @@ final class StateManager {
                     return
                 }
 
-                _ = await self.audioEngine.stopCapture()
-                self.audioLevelStream = nil
+                // Transition to .processing BEFORE the await so that a concurrent
+                // endRecording() (from the user pressing the hotkey at the same
+                // instant EOU fires) sees .processing and bails out via its
+                // `guard appState == .recording` check.
                 self.appState = .processing
+                self.audioLevelStream = nil
+
+                _ = await self.audioEngine.stopCapture()
 
                 NSAccessibility.post(
                     element: NSApp as Any,
