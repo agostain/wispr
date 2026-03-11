@@ -161,9 +161,6 @@ final class StateManager {
         switch appState {
         case .idle:
             await beginRecording()
-            if appState == .recording {
-                await startEouMonitoringIfSupported()
-            }
         case .recording:
             cancelEouMonitoring()
             await endRecording()
@@ -321,6 +318,11 @@ final class StateManager {
             // Requirement 2.1: Start audio capture
             let levelStream = try await audioEngine.startCapture()
             audioLevelStream = levelStream
+            // Start EOU monitoring if the active engine supports it.
+            // In push-to-talk this lets recording auto-stop on silence;
+            // in hands-free mode toggleRecording() also calls this, but
+            // the guard inside is idempotent.
+            await startEouMonitoringIfSupported()
         } catch let error as WisprError {
             await handleError(error)
         } catch {
@@ -349,6 +351,9 @@ final class StateManager {
     func endRecording() async {
         // Only end if we're actually recording
         guard appState == .recording else { return }
+
+        // Cancel any active EOU monitoring so it doesn't race with this path
+        cancelEouMonitoring()
 
         // Requirement 2.2: Stop capture and get audio samples
         let audioSamples = await audioEngine.stopCapture()
