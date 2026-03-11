@@ -63,11 +63,16 @@ final class SettingsStore {
     }
     
     // MARK: - Dictation Mode
-    
+
     /// When true, hotkey toggles recording on/off (press once to start, press again to stop).
     /// When false, uses push-to-talk (hold to record, release to stop).
     var handsFreeMode: Bool {
         didSet { save() }
+    }
+
+    /// When true, plays short audio cues on recording start/stop.
+    var soundFeedbackEnabled: Bool {
+        didSet { guard !isLoading else { return }; defaults.set(soundFeedbackEnabled, forKey: Keys.soundFeedbackEnabled) }
     }
     
     // MARK: - UserDefaults Keys
@@ -82,6 +87,7 @@ final class SettingsStore {
         static let onboardingCompleted = "onboardingCompleted"
         static let onboardingLastStep = "onboardingLastStep"
         static let handsFreeMode = "handsFreeMode"
+        static let soundFeedbackEnabled = "soundFeedbackEnabled"
     }
     
     // MARK: - Dependencies
@@ -103,7 +109,8 @@ final class SettingsStore {
         self.onboardingCompleted = false
         self.onboardingLastStep = 0
         self.handsFreeMode = false
-        
+        self.soundFeedbackEnabled = false
+
         // Load persisted values
         load()
     }
@@ -121,7 +128,8 @@ final class SettingsStore {
         defaults.set(onboardingCompleted, forKey: Keys.onboardingCompleted)
         defaults.set(onboardingLastStep, forKey: Keys.onboardingLastStep)
         defaults.set(handsFreeMode, forKey: Keys.handsFreeMode)
-        
+        defaults.set(soundFeedbackEnabled, forKey: Keys.soundFeedbackEnabled)
+
         // Encode languageMode
         if let encoded = try? JSONEncoder().encode(languageMode) {
             defaults.set(encoded, forKey: Keys.languageMode)
@@ -168,6 +176,10 @@ final class SettingsStore {
         
         if defaults.object(forKey: Keys.handsFreeMode) != nil {
             self.handsFreeMode = defaults.bool(forKey: Keys.handsFreeMode)
+        }
+
+        if defaults.object(forKey: Keys.soundFeedbackEnabled) != nil {
+            self.soundFeedbackEnabled = defaults.bool(forKey: Keys.soundFeedbackEnabled)
         }
     }
     

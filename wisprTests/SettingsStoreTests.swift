@@ -258,6 +258,25 @@ struct SettingsStoreTests {
         #expect(newStore.selectedAudioDeviceUID == nil, "Nil audio device UID should persist")
     }
     
+    // MARK: - Sound Feedback Tests
+
+    @Test("SettingsStore soundFeedbackEnabled defaults to false")
+    func testSoundFeedbackDefault() {
+        let defaults = createTestDefaults()
+        let store = SettingsStore(defaults: defaults)
+        #expect(store.soundFeedbackEnabled == false)
+    }
+
+    @Test("SettingsStore persists soundFeedbackEnabled")
+    func testSoundFeedbackPersistence() {
+        let defaults = createTestDefaults()
+        let store = SettingsStore(defaults: defaults)
+        store.soundFeedbackEnabled = true
+
+        let newStore = SettingsStore(defaults: defaults)
+        #expect(newStore.soundFeedbackEnabled == true, "soundFeedbackEnabled should persist")
+    }
+
     @Test("SettingsStore handles multiple rapid changes")
     func testRapidChanges() async {
         let defaults = createTestDefaults()

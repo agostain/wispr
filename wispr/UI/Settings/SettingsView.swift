@@ -114,12 +114,6 @@ struct SettingsView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
-            @Bindable var store = settingsStore
-            Toggle("Hands-Free Mode", isOn: $store.handsFreeMode)
-                .accessibilityHint(
-                    "When enabled, press the hotkey once to start recording and again to stop. " +
-                    "When disabled, hold the hotkey to record."
-                )
         } header: {
             SectionHeader(
                 title: "Hotkey Configuration",
@@ -158,7 +152,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Whisper Model Section
+    // MARK: - Speech Recognition Section
 
     private var availableModels: [ModelInfo] {
         whisperModels.filter { $0.status == .downloaded || $0.status == .active }
@@ -210,9 +204,22 @@ struct SettingsView: View {
                     selectedModelId = newName
                 }
             }
+
+            @Bindable var store = settingsStore
+            Toggle("Hands-Free Mode", isOn: $store.handsFreeMode)
+                .accessibilityHint(
+                    "When enabled, press the hotkey once to start recording and again to stop. " +
+                    "When disabled, hold the hotkey to record."
+                )
+
+            Toggle("Sound Feedback", isOn: $store.soundFeedbackEnabled)
+                .accessibilityHint("When enabled, plays audio cues when recording starts and stops")
+
+            Toggle("Show Recording Overlay", isOn: $store.showRecordingOverlay)
+                .accessibilityHint("When enabled, a floating overlay appears while recording")
         } header: {
             SectionHeader(
-                title: "Speech Recognition Model",
+                title: "Speech Recognition",
                 systemImage: theme.actionSymbol(.model),
                 tint: .purple
             )
@@ -252,12 +259,9 @@ struct SettingsView: View {
     private var generalSection: some View {
         Section {
             @Bindable var store = settingsStore
-            Toggle("Show Recording Overlay", isOn: $store.showRecordingOverlay)
-                .accessibilityHint("When enabled, a floating overlay appears while recording")
-
             Toggle("Launch at Login", isOn: $store.launchAtLogin)
                 .accessibilityHint("When enabled, Wispr starts automatically when you log in")
-            
+
             // Version info
             HStack {
                 Text("Version")
@@ -325,6 +329,7 @@ struct SettingsView: View {
         settingsStore.showRecordingOverlay = true
         settingsStore.launchAtLogin = false
         settingsStore.handsFreeMode = false
+        settingsStore.soundFeedbackEnabled = false
         hotkeyError = nil
         isRecordingHotkey = false
     }
