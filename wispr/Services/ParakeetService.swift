@@ -164,7 +164,9 @@ actor ParakeetService {
                 }
                 let finalText = try await manager.finish()
                 let trimmed = finalText.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !trimmed.isEmpty {
+                // Always yield when EOU was detected, even if text is empty,
+                // so StateManager can auto-stop recording and reset to idle.
+                if eouDetected || !trimmed.isEmpty {
                     continuation.yield(TranscriptionResult(
                         text: trimmed,
                         detectedLanguage: nil,
