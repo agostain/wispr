@@ -92,7 +92,7 @@ actor ParakeetService {
         let manager = StreamingEouAsrManager(
             configuration: config,
             chunkSize: .ms160,
-            eouDebounceMs: 1280
+            eouDebounceMs: 800 // ms of silence before generating an end of utterance
         )
         try await manager.loadModels(modelDir: cacheDir)
         self.eouManager = manager
@@ -352,18 +352,26 @@ extension ParakeetService: TranscriptionEngine {
         if downloadTasks[modelName] != nil {
             return .downloading(progress: 0.0)
         }
+
+        // Check actual files on disk rather than relying solely on
+        // UserDefaults flags, which can get out of sync (e.g. model
+        // downloaded but flag not yet set, or flag cleared).
         if modelName == ModelInfo.KnownID.parakeetEou {
-            if modelName == activeModelName, eouManager != nil {
-                return .active
-            }
-            if isEouDownloaded {
+            let filesExist = Self.countFiles(in: ModelPaths.parakeetEou) >= Self.eouExpectedFileCount
+            if filesExist {
+                if modelName == activeModelName, eouManager != nil {
+                    return .active
+                }
                 return .downloaded
             }
         } else {
-            if modelName == activeModelName, asrManager != nil {
-                return .active
-            }
-            if isDownloaded {
+            let sdkLeaf = AsrModels.defaultCacheDirectory(for: .v3).lastPathComponent
+            let v3Dir = ModelPaths.parakeetV3(sdkLeafName: sdkLeaf)
+            let filesExist = Self.countFiles(in: v3Dir) >= Self.expectedFileCount
+            if filesExist {
+                if modelName == activeModelName, asrManager != nil {
+                    return .active
+                }
                 return .downloaded
             }
         }
