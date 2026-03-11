@@ -207,7 +207,7 @@ final class StateManager {
                 self.appState = .processing
                 self.audioLevelStream = nil
 
-                _ = await self.audioEngine.stopCapture()
+                await self.audioEngine.cancelCapture()
 
                 NSAccessibility.post(
                     element: NSApp as Any,
