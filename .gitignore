@@ -14,4 +14,4 @@ DerivedData/
 
 # Secrets
 secrets
-private_keys
+private_keys.worktrees/
