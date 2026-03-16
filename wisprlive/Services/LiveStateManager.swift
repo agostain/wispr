@@ -6,6 +6,7 @@
 //  Orchestrates DualAudioCapture and two transcription pipeline tasks.
 //
 
+import AppKit
 import Foundation
 import Observation
 import ScreenCaptureKit
@@ -150,11 +151,21 @@ final class LiveStateManager {
 
     /// Fetches the list of running apps available as audio sources.
     /// Only meaningful on macOS 15+. No-op on earlier versions.
+    /// Cross-references with NSWorkspace to exclude daemons and background agents.
     func fetchAudioApps() async {
         guard #available(macOS 15.0, *) else { return }
         guard let content = try? await SCShareableContent.current else { return }
+
+        // Cross-reference with NSWorkspace to exclude daemons and background agents.
+        // Only include apps with activationPolicy == .regular (user-visible apps).
+        let regularBundleIDs = Set(
+            NSWorkspace.shared.runningApplications
+                .filter { $0.activationPolicy == .regular }
+                .compactMap { $0.bundleIdentifier }
+        )
+
         availableAudioApps = content.applications
-            .filter { !$0.bundleIdentifier.isEmpty && !$0.applicationName.isEmpty }
+            .filter { regularBundleIDs.contains($0.bundleIdentifier) }
             .map { AudioApp(bundleIdentifier: $0.bundleIdentifier, name: $0.applicationName) }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
