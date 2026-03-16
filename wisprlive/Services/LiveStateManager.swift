@@ -85,6 +85,8 @@ final class LiveStateManager {
                    let scApp = content.applications.first(where: { $0.bundleIdentifier == app.bundleIdentifier }),
                    let display = content.displays.first {
                     systemFilter = SCContentFilter(display: display, including: [scApp], exceptingWindows: []) as Any
+                } else {
+                    warningBadge = "Could not filter to '\(app.name)' — using all system audio"
                 }
             }
             let streams = try await dualAudio.start(
@@ -152,6 +154,7 @@ final class LiveStateManager {
         guard #available(macOS 15.0, *) else { return }
         guard let content = try? await SCShareableContent.current else { return }
         availableAudioApps = content.applications
+            .filter { !$0.bundleIdentifier.isEmpty && !$0.applicationName.isEmpty }
             .map { AudioApp(bundleIdentifier: $0.bundleIdentifier, name: $0.applicationName) }
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
@@ -162,6 +165,11 @@ final class LiveStateManager {
         guard appState == .capturing else { return }
         guard #available(macOS 15.0, *) else { return }
 
+        // Cancel old pipeline before the await so no overlap
+        remotePipelineTask?.cancel()
+        remotePipelineTask = nil
+        remoteListening = false
+
         var newFilter: SCContentFilter? = nil
         if let app {
             if let content = try? await SCShareableContent.current,
@@ -171,10 +179,15 @@ final class LiveStateManager {
             }
         }
 
-        guard let newStream = try? await dualAudio.switchSystemFilter(newFilter) else { return }
-        remotePipelineTask?.cancel()
-        startRemotePipeline(stream: newStream)
-        remoteListening = false
+        // Re-check after suspension — session may have stopped during the await
+        guard appState == .capturing else { return }
+
+        do {
+            let newStream = try await dualAudio.switchSystemFilter(newFilter)
+            startRemotePipeline(stream: newStream)
+        } catch {
+            warningBadge = "Could not switch audio source"
+        }
     }
 
     /// Called when the currently filtered app terminates. Falls back to all system audio.
