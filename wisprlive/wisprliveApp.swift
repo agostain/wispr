@@ -66,10 +66,13 @@ final class WisprLiveAppDelegate: NSObject, NSApplicationDelegate {
             NSWorkspace.shared.notificationCenter.removeObserver(obs)
         }
         hotkeyObservationTask?.cancel()
-        Task {
-            if let sm = stateManager, sm.appState == .capturing {
+        if let sm = stateManager, sm.appState == .capturing {
+            let sema = DispatchSemaphore(value: 0)
+            Task {
                 await sm.stopCapture()
+                sema.signal()
             }
+            sema.wait()
         }
     }
 

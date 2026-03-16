@@ -197,7 +197,13 @@ final class LiveStateManager {
             let newStream = try await dualAudio.switchSystemFilter(newFilter)
             startRemotePipeline(stream: newStream)
         } catch {
-            warningBadge = "Could not switch audio source"
+            // Filter switch failed — fall back to all-system audio so the pipeline stays alive
+            selectedAudioApp = nil
+            warningBadge = "Could not switch audio source — reverted to All System Audio"
+            if let fallback = try? await dualAudio.switchSystemFilter(nil) {
+                guard appState == .capturing else { return }
+                startRemotePipeline(stream: fallback)
+            }
         }
     }
 
