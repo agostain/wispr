@@ -20,7 +20,6 @@ actor DualAudioCapture {
     /// Cast to `SystemAudioCapture` inside `stop()` with `#available`.
     private var systemCaptureHandle: Any?
     private(set) var isActive: Bool = false
-    private(set) var micDisconnected: Bool = false
 
     let chunkDuration: TimeInterval
 
@@ -48,7 +47,6 @@ actor DualAudioCapture {
         guard !isActive else { throw DualCaptureError.alreadyRunning }
 
         isActive = true
-        micDisconnected = false
 
         // Start mic capture
         let micStream = try await micCapture.start(echoCancellation: echoCancellation)
@@ -57,13 +55,12 @@ actor DualAudioCapture {
         let systemStream: AsyncStream<[Float]>
         if #available(macOS 15.0, *) {
             let sysCapture = SystemAudioCapture(chunkDuration: chunkDuration)
-            self.systemCaptureHandle = sysCapture  // retain so stop() can call stop()
             do {
                 let filter = systemFilter as? SCContentFilter
                 systemStream = try await sysCapture.start(filter: filter)
+                self.systemCaptureHandle = sysCapture  // set only on success
             } catch {
                 // System audio failure is non-fatal — return empty stream
-                self.systemCaptureHandle = nil
                 let (empty, cont) = AsyncStream.makeStream(of: [Float].self)
                 cont.finish()
                 systemStream = empty
@@ -89,11 +86,6 @@ actor DualAudioCapture {
         systemCaptureHandle = nil
     }
 
-    /// Called by LiveStateManager when mic disconnects mid-session.
-    func handleMicDisconnect() {
-        micDisconnected = true
-    }
-
     /// Stops the current system audio capture and restarts it with a new filter.
     /// Returns the new stream. Only valid while a session is active.
     @available(macOS 15.0, *)
@@ -104,15 +96,9 @@ actor DualAudioCapture {
         }
         systemCaptureHandle = nil
         let sysCapture = SystemAudioCapture(chunkDuration: chunkDuration)
-        self.systemCaptureHandle = sysCapture
-        do {
-            return try await sysCapture.start(filter: filter)
-        } catch {
-            self.systemCaptureHandle = nil
-            let (empty, cont) = AsyncStream.makeStream(of: [Float].self)
-            cont.finish()
-            return empty
-        }
+        let stream = try await sysCapture.start(filter: filter)  // throws on failure
+        self.systemCaptureHandle = sysCapture                     // only set on success
+        return stream
     }
 }
 
